@@ -23,8 +23,61 @@ app.get('*', (req, res) => {
 })
 
 io.on('connection', socket => {
+  // console.log('socket connected in lyreFeed')
 
+  socket.on('new feed', feedData => {
+    console.log('feedData.host :', feedData.host);
+    console.log('feedData.path :', feedData.path);
+
+    socket.host = feedData.host;
+    socket.path = feedData.path;
+
+    let newFeed = {
+      host: feedData.host,
+      path: feedData.path,
+    }
+
+    pub.hmset('feeds', newFeed.host, JSON.stringify(newFeed), (err, res) => {
+      if (err) console.log('error saving new feed to redis :', err);
+    });
+
+    pub.hgetall('feeds', (err, feeds) => {
+      if (err) { console.log('error getting feeds from redis :', err) }
+      else {
+        console.log('feeds on lyrefeed server :', feeds);
+        socket.emit('update feeds', feeds);
+      }
+    })
+    
+  })
   
+  socket.on('main feed connect', () => {
+    pub.hgetall('feeds', (err, feeds) => {
+      if (err) { console.log('error getting feeds from redis :', err) }
+      else {
+        console.log('feeds on lyrefeed server :', feeds);
+        socket.emit('update feeds', feeds);
+      }
+    })
+  })
+
+  socket.on('disconnect', () => {
+    console.log('socket.host in socket.on disconnect :', socket.host);
+    let host = socket.host;
+
+    if (host) {
+      pub.hdel('feeds', -99, host, (err, data) => {
+        if (err) { console.log('error deleting feed from redis :', err); }
+      })
+      pub.hgetall('feeds', (err, feeds) => {
+        if (err) { console.log('error getting feeds from redis :', err) }
+        else {
+          console.log('feeds on lyrefeed server :', feeds);
+          io.emit('update deleted feeds', feeds);
+        }
+      })
+    }
+  })
 
 
 })
