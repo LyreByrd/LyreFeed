@@ -2,6 +2,8 @@ require('dotenv').config()
 const app = require('express')()
 const server = require('http').Server(app)
 const io = require('socket.io')(server)
+const getVideoId = require('get-video-id');
+const axios = require('axios');
 
 const dev = process.env.NODE_ENV !== 'production';
 
@@ -32,6 +34,7 @@ io.on('connection', socket => {
     let newFeed = {
       host: feedData.host,
       path: feedData.path,
+      videoId: feedData.videoId || null
     }
 
     pub.hmset('feeds', newFeed.host, JSON.stringify(newFeed), (err, res) => {
@@ -56,6 +59,42 @@ io.on('connection', socket => {
       }
     });
   });
+
+  socket.on('video data', data => {
+    let vidId, host, title;
+    if (data.id) {
+      host = data.host;
+      if (data.id.length === 11) {
+        vidId = data.id;
+      } else {
+        let {id, service} = getVideoId(data.id);
+        vidId = id;
+      }
+    }
+
+    axios.get(`https://www.youtube.com/oembed?format=json&url=https://youtu.be/${vidId}`)
+    .then(res => {
+      title = res.data.title; 
+      pub.hget('feeds', host, (err, feed) => {
+        if (err) { console.log('error getting feed from redis :', err); }
+        else {
+          if (feed) {
+            feed = JSON.parse(feed);
+            feed.videoId = vidId;
+            feed.title = title;
+            pub.hset('feeds', feed.host, JSON.stringify(feed));
+            pub.hgetall('feeds', (err, feeds) => {
+              io.emit('update feeds', feeds);
+            })
+          }
+        }
+      });
+    })
+    .catch(err => {
+      console.log('err getting yt data :', err);
+    })
+
+  })
 
   socket.on('disconnect', () => {
 
