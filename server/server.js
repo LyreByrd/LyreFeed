@@ -24,7 +24,7 @@ app.get('*', (req, res) => {
 
 io.on('connection', socket => {
   // console.log('socket connected in lyreFeed')
-
+  
   socket.on('new feed', feedData => {
     console.log('feedData.host :', feedData.host);
     console.log('feedData.path :', feedData.path);
@@ -50,18 +50,44 @@ io.on('connection', socket => {
     })
     
   })
+
+  socket.on('join player', () => {
+    pub.hgetall('feeds', (err, feeds) => {
+      console.log('feeds in join feed :', feeds);
+      if (err) { console.log('error getting feeds from redis :', err) }
+      else {
+        console.log('feeds on lyrefeed server in join feed:', feeds);
+        io.emit('update feeds', feeds);
+      }
+    })
+  })
+
+  socket.on('join feed', () => {
+    io.emit('forceUpdate')
+    pub.hgetall('feeds', (err, feeds) => {
+      console.log('feeds in join feed :', feeds);
+      if (err) { console.log('error getting feeds from redis :', err) }
+      else {
+        console.log('feeds on lyrefeed server in join feed:', feeds);
+        io.emit('update feeds', feeds);
+      }
+    })
+  })
   
   socket.on('main feed connect', () => {
     pub.hgetall('feeds', (err, feeds) => {
       if (err) { console.log('error getting feeds from redis :', err) }
       else {
-        console.log('feeds on lyrefeed server :', feeds);
+        console.log('feeds on lyrefeed in main feed connect :', feeds);
         socket.emit('update feeds', feeds);
       }
     })
   })
 
-  socket.on('disconnect', () => {
+  socket.on('disconnect', (reason) => {
+
+    console.log('reason :', reason);
+
     console.log('socket.host in socket.on disconnect :', socket.host);
     let host = socket.host;
 
