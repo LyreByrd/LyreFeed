@@ -25,8 +25,6 @@ app.get('*', (req, res) => {
 io.on('connection', socket => {
   
   socket.on('new feed', feedData => {
-    console.log('feedData.host :', feedData.host);
-    console.log('feedData.path :', feedData.path);
 
     socket.host = feedData.host;
     socket.path = feedData.path;
@@ -70,7 +68,6 @@ io.on('connection', socket => {
       pub.hgetall('feeds', (err, feeds) => {
         if (err) { console.log('error getting feeds from redis :', err) }
         else {
-          console.log('feeds on lyrefeed server :', feeds);
           io.emit('update deleted feeds', feeds);
         }
       });
