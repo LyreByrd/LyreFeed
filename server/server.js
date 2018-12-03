@@ -34,7 +34,8 @@ io.on('connection', socket => {
     let newFeed = {
       host: feedData.host,
       path: feedData.path,
-      videoId: feedData.videoId || null
+      videoId: feedData.videoId || null,
+      usersInRoom: feedData.usersInRoom
     }
 
     pub.hmset('feeds', newFeed.host, JSON.stringify(newFeed), (err, res) => {
@@ -47,6 +48,46 @@ io.on('connection', socket => {
       if (err) { console.log('error getting feeds from redis :', err) }
       else {
         io.emit('update feeds', feeds);
+      }
+    })
+  })
+
+  socket.on('user joined room', (room) => {
+    pub.hget('feeds', room, (err, feed) => {
+      if (err) { console.log('error getting feed from redis :', err) }
+      else {
+        feed = JSON.parse(feed);
+        
+        feed.usersInRoom = feed.usersInRoom + 1;
+        console.log('feed :', feed);
+        pub.hset('feeds', room, JSON.stringify(feed), (err, res) => {
+          if (err) { console.log('error updating usersInRoom on redis :', err); }
+          else {
+            pub.hgetall('feeds', (err, feeds) => {
+              io.emit('update feeds', feeds);
+            })
+          }
+        })
+      }
+    })
+  })
+
+  socket.on('user left room', (room) => {
+    pub.hget('feeds', room, (err, feed) => {
+      if (err) { console.log('error getting feed from redis :', err) }
+      else {
+        feed = JSON.parse(feed);
+        
+        feed.usersInRoom = feed.usersInRoom - 1;
+        console.log('feed :', feed);
+        pub.hset('feeds', room, JSON.stringify(feed), (err, res) => {
+          if (err) { console.log('error updating usersInRoom on redis :', err); }
+          else {
+            pub.hgetall('feeds', (err, feeds) => {
+              io.emit('update feeds', feeds);
+            })
+          }
+        })
       }
     })
   })
