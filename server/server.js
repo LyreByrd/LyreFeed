@@ -78,17 +78,18 @@ io.on('connection', socket => {
       if (err) { console.log('error getting feed from redis :', err) }
       else {
         feed = JSON.parse(feed);
-        
-        feed.usersInRoom = feed.usersInRoom - 1;
-        console.log('feed :', feed);
-        pub.hset('feeds', room, JSON.stringify(feed), (err, res) => {
-          if (err) { console.log('error updating usersInRoom on redis :', err); }
-          else {
-            pub.hgetall('feeds', (err, feeds) => {
-              io.emit('update feeds', feeds);
-            })
-          }
-        })
+        if (feed) {
+          feed.usersInRoom = feed.usersInRoom - 1;
+          console.log('feed :', feed);
+          pub.hset('feeds', room, JSON.stringify(feed), (err, res) => {
+            if (err) { console.log('error updating usersInRoom on redis :', err); }
+            else {
+              pub.hgetall('feeds', (err, feeds) => {
+                io.emit('update feeds', feeds);
+              })
+            }
+          })
+        }
       }
     })
   })
