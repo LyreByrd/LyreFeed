@@ -28,6 +28,8 @@ io.on('connection', socket => {
   
   socket.on('new feed', feedData => {
 
+    console.log('feedData 1 :', feedData);
+
     socket.host = feedData.host;
     socket.path = feedData.path;
 
@@ -35,7 +37,8 @@ io.on('connection', socket => {
       host: feedData.host,
       path: feedData.path,
       videoId: feedData.videoId || null,
-      usersInRoom: feedData.usersInRoom
+      usersInRoom: feedData.usersInRoom,
+      service: feedData.service,
     }
 
     pub.hmset('feeds', newFeed.host, JSON.stringify(newFeed), (err, res) => {
