@@ -115,8 +115,9 @@ io.on('connection', socket => {
         vidId = id;
       }
     }
+    console.log('data in video data :', data);
 
-    axios.get(`https://www.youtube.com/oembed?format=json&url=https://youtu.be/${vidId}`)
+    axios.get(`https://www.youtube.com/oembed?format=json&url=https://youtu.be/${data.id}`)
     .then(res => {
       title = res.data.title; 
       pub.hget('feeds', host, (err, feed) => {
