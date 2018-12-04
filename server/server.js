@@ -80,7 +80,6 @@ io.on('connection', socket => {
         feed = JSON.parse(feed);
         if (feed) {
           feed.usersInRoom = feed.usersInRoom - 1;
-          console.log('feed :', feed);
           pub.hset('feeds', room, JSON.stringify(feed), (err, res) => {
             if (err) { console.log('error updating usersInRoom on redis :', err); }
             else {
@@ -104,7 +103,6 @@ io.on('connection', socket => {
   });
 
   socket.on('video data', data => {
-    console.log('video data ping');
     let vidId, host, title;
     if (data.id) {
       host = data.host;
@@ -115,7 +113,6 @@ io.on('connection', socket => {
         vidId = id;
       }
     }
-    console.log('data in video data :', data);
 
     axios.get(`https://www.youtube.com/oembed?format=json&url=https://youtu.be/${data.id}`)
     .then(res => {
@@ -141,8 +138,6 @@ io.on('connection', socket => {
   });
 
   socket.on('spotify data', data => {
-    console.log('spotify data ping');
-    console.log('data :', data);
     let artist, title, albumArt, room;
 
     if (data) {
