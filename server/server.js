@@ -1,6 +1,11 @@
 require('dotenv').config()
+const privateKey = fs.readFileSync('../../../etc/letsencrypt/live/gamaycotte.com/privkey.pem').toString();
+const certificate = fs.readFileSync('../../../etc/letsencrypt/live/gamaycotte.com/fullchain.pem').toString();
 const app = require('express')()
-const server = require('http').Server(app)
+const server = require('http').Server({
+  key: privateKey,
+  cert: certificate
+},app);
 const io = require('socket.io')(server)
 const getVideoId = require('get-video-id');
 const axios = require('axios');
