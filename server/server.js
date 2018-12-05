@@ -3,7 +3,7 @@ const fs = require('fs');
 const privateKey = fs.readFileSync('../../../etc/letsencrypt/live/gamaycotte.com/privkey.pem').toString();
 const certificate = fs.readFileSync('../../../etc/letsencrypt/live/gamaycotte.com/fullchain.pem').toString();
 const app = require('express')()
-const server = require('http').Server({
+const server = require('https').Server({
   key: privateKey,
   cert: certificate
 },app);
