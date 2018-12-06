@@ -34,8 +34,6 @@ io.on('connection', socket => {
   
   socket.on('new feed', feedData => {
 
-    console.log('feedData 1 :', feedData);
-
     socket.host = feedData.host;
     socket.path = feedData.path;
 
@@ -68,7 +66,6 @@ io.on('connection', socket => {
         feed = JSON.parse(feed);
         if (feed) {
           feed.usersInRoom = feed.usersInRoom + 1;
-          console.log('feed :', feed);
           pub.hset('feeds', room, JSON.stringify(feed), (err, res) => {
             if (err) { console.log('error updating usersInRoom on redis :', err); }
             else {
@@ -89,7 +86,6 @@ io.on('connection', socket => {
         feed = JSON.parse(feed);
         if (feed) {
           feed.usersInRoom = feed.usersInRoom - 1;
-          console.log('feed :', feed);
           pub.hset('feeds', room, JSON.stringify(feed), (err, res) => {
             if (err) { console.log('error updating usersInRoom on redis :', err); }
             else {
@@ -124,7 +120,7 @@ io.on('connection', socket => {
       }
     }
 
-    axios.get(`https://www.youtube.com/oembed?format=json&url=https://youtu.be/${vidId}`)
+    axios.get(`https://www.youtube.com/oembed?format=json&url=https://youtu.be/${data.id}`)
     .then(res => {
       title = res.data.title; 
       pub.hget('feeds', host, (err, feed) => {
@@ -145,6 +141,33 @@ io.on('connection', socket => {
     .catch(err => {
       console.log('err getting yt data :', err);
     })
+  });
+
+  socket.on('spotify data', data => {
+    let artist, title, albumArt, room;
+
+    if (data) {
+      room = data.room;
+      artist = data.artist;
+      title = data.title;
+      albumArt = data.albumArt;
+    }
+    pub.hget('feeds', room, (err, feed) => {
+      if (err) { console.log('error getting feed from redis in spotify data :', err); }
+      else {
+        if (feed) {
+          feed = JSON.parse(feed);
+          feed.artist = artist;
+          feed.title = title;
+          feed.albumArt = albumArt;
+          pub.hset('feeds', room, JSON.stringify(feed));
+          pub.hgetall('feeds', (err, feeds) => {
+            io.emit('update feeds', feeds);
+          })
+        }
+      }
+    })
+
 
   })
 
